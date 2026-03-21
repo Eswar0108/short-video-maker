@@ -1,5 +1,6 @@
 FROM ubuntu:22.04 AS install-whisper
 ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y git
 RUN apt update
 # whisper install dependencies
 RUN apt install -y \

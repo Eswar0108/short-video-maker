@@ -6,7 +6,7 @@ ARG BASE_CUDA_RUN_CONTAINER=nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_V
 # Ref: https://github.com/ggml-org/whisper.cpp
 FROM ${BASE_CUDA_DEV_CONTAINER} AS install-whisper
 ENV DEBIAN_FRONTEND=noninteractive
-
+RUN apt-get update && apt-get install -y git
 RUN apt-get update && \
     apt-get install --fix-missing --no-install-recommends -y bash git make vim wget g++ ffmpeg curl
 
