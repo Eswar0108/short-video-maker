@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import VideoIcon from '@mui/icons-material/VideoLibrary';
 import AddIcon from '@mui/icons-material/Add';
+import PlaylistPlayIcon from '@mui/icons-material/PlaylistPlay';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -51,6 +52,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             >
               Short Video Maker
             </Typography>
+            <Button 
+              color="inherit" 
+              startIcon={<PlaylistPlayIcon />}
+              onClick={() => navigate('/bulk')}
+              sx={{ mr: 1 }}
+            >
+              Bulk Generate
+            </Button>
             <Button 
               color="inherit" 
               startIcon={<AddIcon />}

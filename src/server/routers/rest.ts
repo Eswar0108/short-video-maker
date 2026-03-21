@@ -10,6 +10,9 @@ import { validateCreateShortInput } from "../validator";
 import { ShortCreator } from "../../short-creator/ShortCreator";
 import { logger } from "../../logger";
 import { Config } from "../../config";
+import { generateScript, getTrendingTopics } from "../utils/scriptGenerator";
+import type { VoiceEnum, MusicMoodEnum, CaptionPositionEnum, MusicVolumeEnum, OrientationEnum } from "../../types/shorts";
+import { VoiceEnum as VoiceEnumValues, MusicMoodEnum as MusicMoodEnumValues, CaptionPositionEnum as CaptionPositionEnumValues, MusicVolumeEnum as MusicVolumeEnumValues, OrientationEnum as OrientationEnumValues } from "../../types/shorts";
 
 // todo abstract class
 export class APIRouter {
@@ -217,6 +220,94 @@ export class APIRouter {
           logger.error(error, "Error getting video");
           res.status(404).json({
             error: "Video not found",
+          });
+        }
+      },
+    );
+
+    // Trending topics endpoint
+    this.router.get(
+      "/trending-topics",
+      (req: ExpressRequest, res: ExpressResponse) => {
+        try {
+          const count = parseInt(req.query.count as string) || 10;
+          const topics = getTrendingTopics(count);
+          res.status(200).json(topics);
+        } catch (error: unknown) {
+          logger.error(error, "Error fetching trending topics");
+          res.status(500).json({
+            error: "Failed to fetch trending topics",
+          });
+        }
+      },
+    );
+
+    // Bulk generate endpoint
+    this.router.post(
+      "/bulk-generate",
+      async (req: ExpressRequest, res: ExpressResponse) => {
+        try {
+          const {
+            topic,
+            style = "Problem-Solution",
+            voice = VoiceEnumValues.af_nova,
+            music = "hopeful",
+            minDuration = 30000,
+          } = req.body;
+
+          if (!topic) {
+            res.status(400).json({
+              error: "topic is required",
+            });
+            return;
+          }
+
+          // Generate script from topic
+          const scriptData = generateScript({
+            topic,
+            style: style as "Problem-Solution" | "Myth-Truth" | "Tutorial" | "Motivation",
+            minDuration,
+          });
+
+          // Create config for video
+          const config: {
+            orientation: OrientationEnum;
+            music: MusicMoodEnum;
+            musicVolume: MusicVolumeEnum;
+            captionPosition: CaptionPositionEnum;
+            voice: VoiceEnum;
+            paddingBack: number;
+          } = {
+            orientation: OrientationEnumValues.portrait,
+            music: music as MusicMoodEnum,
+            musicVolume: MusicVolumeEnumValues.high,
+            captionPosition: CaptionPositionEnumValues.bottom,
+            voice: voice as VoiceEnum,
+            paddingBack: 2000,
+          };
+
+          // Convert search terms from strings to arrays
+          const scenes = scriptData.scenes.map((scene) => ({
+            text: scene.text,
+            searchTerms: scene.searchTerms,
+          }));
+
+          logger.info({ topic, style, scenes }, "Generating bulk video");
+
+          // Add to queue and return video ID
+          const videoId = this.shortCreator.addToQueue(scenes, config);
+
+          res.status(201).json({
+            id: `bulk-${videoId}`,
+            videoId,
+            topic,
+            style,
+          });
+        } catch (error: unknown) {
+          logger.error(error, "Error in bulk generate");
+          res.status(400).json({
+            error: "Failed to generate video",
+            message: error instanceof Error ? error.message : "Unknown error",
           });
         }
       },

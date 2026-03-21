@@ -1,0 +1,140 @@
+{
+  "name": "Instagram Reels Generator (Educational)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1",
+      "name": "When called via webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [50, 300]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Create an Instagram Reel script for educational content.\n\nTopic: {{ $json.topic }}\nStyle: {{ $json.style || 'Problem-Solution' }}\nVoice: {{ $json.voice || 'af_nova' }}\nMusic: {{ $json.music || 'hopeful' }}\n\nGenerate a 3-scene script for Short Video Maker API.\nEach scene needs:\n1. Text (2-3 sentences, engaging narration)\n2. searchTerms (array of 2-3 specific keywords)\n\nReturn ONLY valid JSON in this format:\n{\n  \"scenes\": [\n    {\"text\": \"...\", \"searchTerms\": [\"...\", \"...\", \"...\"]},\n    {\"text\": \"...\", \"searchTerms\": [\"...\", \"...\", \"...\"]},\n    {\"text\": \"...\", \"searchTerms\": [\"...\", \"...\", \"...\"]}\n  ]\n}",
+        "model": "gpt-4-turbo"
+      },
+      "id": "2",
+      "name": "Generate Script with LLM",
+      "type": "@n8n/n8n-nodes-langchain.openAiChat",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3123/api/short-video",
+        "authentication": "none",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "scenes",
+              "value": "={{ $json.scenes }}"
+            },
+            {
+              "name": "config",
+              "value": "={\n  \"orientation\": \"portrait\",\n  \"music\": \"{{ $json.music || 'hopeful' }}\",\n  \"musicVolume\": \"high\",\n  \"captionPosition\": \"bottom\",\n  \"voice\": \"{{ $json.voice || 'af_nova' }}\",\n  \"paddingBack\": 2000\n}"
+            }
+          ]
+        }
+      },
+      "id": "3",
+      "name": "Call Short Video Maker API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "wait": 45
+      },
+      "id": "4",
+      "name": "Wait 45 seconds",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=http://localhost:3123/api/short-video/{{ $nodes['Call Short Video Maker API'].json.videoId }}/status",
+        "authentication": "none"
+      },
+      "id": "5",
+      "name": "Check Video Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "content": "Video Generated Successfully!\n\nTopic: {{ $json.topic }}\nStatus: {{ $nodes['Check Video Status'].json.status }}\nVideo ID: {{ $nodes['Call Short Video Maker API'].json.videoId }}\n\nDownload link: http://localhost:3123/api/short-video/{{ $nodes['Call Short Video Maker API'].json.videoId }}",
+        "messageType": "text"
+      },
+      "id": "6",
+      "name": "Send Success Message",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "1": {
+      "main": [
+        [
+          {
+            "node": "2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2": {
+      "main": [
+        [
+          {
+            "node": "3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3": {
+      "main": [
+        [
+          {
+            "node": "4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4": {
+      "main": [
+        [
+          {
+            "node": "5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5": {
+      "main": [
+        [
+          {
+            "node": "6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

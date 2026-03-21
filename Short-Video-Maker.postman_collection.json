@@ -1,0 +1,325 @@
+{
+  "info": {
+    "_postman_id": "short-video-maker-api",
+    "name": "Short Video Maker API",
+    "description": "Complete API collection for Short Video Maker - Generate Instagram Reels, TikTok, and YouTube Shorts",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Health Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Check if the server is running and healthy"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Video Creation",
+      "item": [
+        {
+          "name": "Create Single Video",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scenes\": [\n    {\n      \"text\": \"Most people waste 2 hours a day on this. Here's how to save it.\",\n      \"searchTerms\": [\"time management\", \"productivity\", \"clock\"]\n    },\n    {\n      \"text\": \"Use the Pomodoro Technique: 25 minutes focused work, 5 minutes break.\",\n      \"searchTerms\": [\"timer\", \"focus\", \"productivity\"]\n    },\n    {\n      \"text\": \"Try it this week and watch your progress skyrocket. Drop a comment if it worked for you!\",\n      \"searchTerms\": [\"success\", \"achievement\", \"victory\"]\n    }\n  ],\n  \"config\": {\n    \"orientation\": \"portrait\",\n    \"music\": \"hopeful\",\n    \"musicVolume\": \"high\",\n    \"captionPosition\": \"bottom\",\n    \"voice\": \"af_nova\",\n    \"paddingBack\": 2000\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/short-video",
+              "host": ["{{base_url}}"],
+              "path": ["api", "short-video"]
+            },
+            "description": "Create a single short video with custom scenes and config"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Video Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/short-video/{{videoId}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "short-video", "{{videoId}}", "status"]
+            },
+            "description": "Check the status of a video (pending, processing, ready, failed)"
+          },
+          "response": []
+        },
+        {
+          "name": "Download Video",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/short-video/{{videoId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "short-video", "{{videoId}}"]
+            },
+            "description": "Download the video file (binary MP4)"
+          },
+          "response": []
+        },
+        {
+          "name": "List All Videos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/short-videos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "short-videos"]
+            },
+            "description": "Get list of all generated videos with their statuses"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Video",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/short-video/{{videoId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "short-video", "{{videoId}}"]
+            },
+            "description": "Delete a video by ID"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Bulk Generation",
+      "item": [
+        {
+          "name": "Get Trending Topics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/trending-topics?count=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "trending-topics"],
+              "query": [
+                {
+                  "key": "count",
+                  "value": "10",
+                  "description": "Number of topics to return (default: 10)"
+                }
+              ]
+            },
+            "description": "Fetch trending topics for bulk video generation"
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Video from Topic (Bulk)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"topic\": \"Time Management\",\n  \"style\": \"Problem-Solution\",\n  \"voice\": \"af_nova\",\n  \"music\": \"hopeful\",\n  \"minDuration\": 30000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/bulk-generate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bulk-generate"]
+            },
+            "description": "Generate a video from a trending topic with auto-script generation"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Configuration & Options",
+      "item": [
+        {
+          "name": "Get Available Voices",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/voices",
+              "host": ["{{base_url}}"],
+              "path": ["api", "voices"]
+            },
+            "description": "Get list of all available voice options for narration"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Music Tags/Moods",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/music-tags",
+              "host": ["{{base_url}}"],
+              "path": ["api", "music-tags"]
+            },
+            "description": "Get all available music moods (hopeful, chill, excited, etc.)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Example Workflows",
+      "item": [
+        {
+          "name": "1. Create Problem-Solution Video",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scenes\": [\n    {\n      \"text\": \"Most people struggle with procrastination. Here's the solution.\",\n      \"searchTerms\": [\"procrastination\", \"productivity\", \"motivation\"]\n    },\n    {\n      \"text\": \"Use the 2-minute rule: Start with just 2 minutes of work. Once you start, momentum takes over.\",\n      \"searchTerms\": [\"timer\", \"action\", \"start\"]\n    },\n    {\n      \"text\": \"Try this today and tag me in your results!\",\n      \"searchTerms\": [\"success\", \"achievement\", \"progress\"]\n    }\n  ],\n  \"config\": {\n    \"orientation\": \"portrait\",\n    \"music\": \"hopeful\",\n    \"musicVolume\": \"high\",\n    \"captionPosition\": \"bottom\",\n    \"voice\": \"af_sarah\",\n    \"paddingBack\": 2000\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/short-video",
+              "host": ["{{base_url}}"],
+              "path": ["api", "short-video"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Create Myth-Truth Video",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scenes\": [\n    {\n      \"text\": \"Everyone thinks successful people wake up at 5 AM. The truth is different.\",\n      \"searchTerms\": [\"myth\", \"success\", \"morning\"]\n    },\n    {\n      \"text\": \"Success is about consistency, not timing. Wake up when it works for YOUR schedule.\",\n      \"searchTerms\": [\"truth\", \"consistency\", \"time management\"]\n    },\n    {\n      \"text\": \"What time do YOU wake up? Comment below!\",\n      \"searchTerms\": [\"engagement\", \"community\", \"question\"]\n    }\n  ],\n  \"config\": {\n    \"orientation\": \"portrait\",\n    \"music\": \"contemplative\",\n    \"musicVolume\": \"high\",\n    \"captionPosition\": \"bottom\",\n    \"voice\": \"am_michael\",\n    \"paddingBack\": 2000\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/short-video",
+              "host": ["{{base_url}}"],
+              "path": ["api", "short-video"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Create Tutorial Video",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scenes\": [\n    {\n      \"text\": \"Learn the Feynman Technique for faster learning. It's easier than you think.\",\n      \"searchTerms\": [\"learning\", \"technique\", \"education\"]\n    },\n    {\n      \"text\": \"Step 1: Choose a topic. Step 2: Explain it simply. Step 3: Find gaps. Step 4: Review and simplify.\",\n      \"searchTerms\": [\"steps\", \"process\", \"learning method\"]\n    },\n    {\n      \"text\": \"Master this technique and dominate your exams. Try it this week!\",\n      \"searchTerms\": [\"success\", \"mastery\", \"education\"]\n    }\n  ],\n  \"config\": {\n    \"orientation\": \"portrait\",\n    \"music\": \"chill\",\n    \"musicVolume\": \"high\",\n    \"captionPosition\": \"bottom\",\n    \"voice\": \"af_nova\",\n    \"paddingBack\": 2000\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/short-video",
+              "host": ["{{base_url}}"],
+              "path": ["api", "short-video"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Bulk Generate - Time Management",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"topic\": \"Time Management\",\n  \"style\": \"Problem-Solution\",\n  \"voice\": \"af_nova\",\n  \"music\": \"hopeful\",\n  \"minDuration\": 30000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/bulk-generate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bulk-generate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Bulk Generate - Habit Building",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"topic\": \"Habit Building\",\n  \"style\": \"Tutorial\",\n  \"voice\": \"af_sarah\",\n  \"music\": \"chill\",\n  \"minDuration\": 30000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/bulk-generate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bulk-generate"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3123",
+      "type": "default",
+      "description": "Base URL for the API. In Codespaces, use the port forward link"
+    },
+    {
+      "key": "videoId",
+      "value": "paste_video_id_here",
+      "type": "default",
+      "description": "Video ID from a previous create request"
+    }
+  ]
+}
