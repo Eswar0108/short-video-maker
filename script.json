@@ -1,0 +1,36 @@
+{
+  "scenes": [
+    {
+      "text": "Most people [describe problem]. Here's how to fix it.",
+      "searchTerms": [
+        "focus",
+        "productivity",
+        "efficient"
+      ]
+    },
+    {
+      "text": "The solution is [method]. Step 1: [action], Step 2: [action], Step 3: [action].",
+      "searchTerms": [
+        "focus",
+        "productivity",
+        "efficient"
+      ]
+    },
+    {
+      "text": "Try this for a week. Drop a comment if it worked for you!",
+      "searchTerms": [
+        "focus",
+        "productivity",
+        "efficient"
+      ]
+    }
+  ],
+  "config": {
+    "orientation": "portrait",
+    "music": "hopeful",
+    "musicVolume": "high",
+    "captionPosition": "bottom",
+    "voice": "af_nova",
+    "paddingBack": 2000
+  }
+}
