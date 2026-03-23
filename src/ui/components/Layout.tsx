@@ -14,6 +14,8 @@ import {
 import VideoIcon from '@mui/icons-material/VideoLibrary';
 import AddIcon from '@mui/icons-material/Add';
 import PlaylistPlayIcon from '@mui/icons-material/PlaylistPlay';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import WorkflowIcon from '@mui/icons-material/AccountTree';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -52,6 +54,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             >
               Short Video Maker
             </Typography>
+            <Button 
+              color="inherit" 
+              startIcon={<AutoAwesomeIcon />}
+              onClick={() => navigate('/pro-scripts')}
+              sx={{ mr: 1 }}
+            >
+              Pro Scripts
+            </Button>
+            <Button 
+              color="inherit" 
+              startIcon={<WorkflowIcon />}
+              onClick={() => navigate('/workflow')}
+              sx={{ mr: 1 }}
+            >
+              Workflow
+            </Button>
             <Button 
               color="inherit" 
               startIcon={<PlaylistPlayIcon />}
