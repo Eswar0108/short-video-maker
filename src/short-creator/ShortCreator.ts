@@ -51,6 +51,23 @@ export class ShortCreator {
     return "failed";
   }
 
+  private normalizeVoice(voice?: string): string {
+    const voiceMap: Record<string, string> = {
+      'male-professional': 'bm_george',
+      'female-energetic': 'bf_emma',
+      'male-tech': 'am_liam',
+      'female-friendly': 'bf_lily',
+      'male': 'bm_george',
+      'female': 'bf_emma',
+      'default': 'af_nova',
+    };
+
+    if (!voice) return 'af_nova';
+    if (Object.values(voiceMap).includes(voice)) return voice;
+    if (voiceMap[voice]) return voiceMap[voice];
+    return 'af_nova';
+  }
+
   public addToQueue(sceneInput: SceneInput[], config: RenderConfig): string {
     // todo add mutex lock
     const id = cuid();
@@ -107,11 +124,10 @@ export class ShortCreator {
       config.orientation || OrientationEnum.portrait;
 
     let index = 0;
+    const voiceToUse = this.normalizeVoice(config.voice);
+
     for (const scene of inputScenes) {
-      const audio = await this.kokoro.generate(
-        scene.text,
-        config.voice ?? "af_heart",
-      );
+      const audio = await this.kokoro.generate(scene.text, voiceToUse as any);
       let { audioLength } = audio;
       const { audio: audioStream } = audio;
 

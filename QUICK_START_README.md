@@ -240,3 +240,6 @@ kill -9 <PID>   # Kill it
 ---
 
 **Questions?** Check the main README (4.2 Quick Start section) or MOBILE_ACCESS_GUIDE.md for detailed troubleshooting.
+
+
+

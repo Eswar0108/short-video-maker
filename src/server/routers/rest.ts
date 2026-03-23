@@ -14,6 +14,32 @@ import { generateScript, getTrendingTopics } from "../utils/scriptGenerator";
 import type { VoiceEnum, MusicMoodEnum, CaptionPositionEnum, MusicVolumeEnum, OrientationEnum } from "../../types/shorts";
 import { VoiceEnum as VoiceEnumValues, MusicMoodEnum as MusicMoodEnumValues, CaptionPositionEnum as CaptionPositionEnumValues, MusicVolumeEnum as MusicVolumeEnumValues, OrientationEnum as OrientationEnumValues } from "../../types/shorts";
 
+// Utility function to generate hashtags
+function generateHashtags(topic: string, category: string): string[] {
+  const baseHashtags = [
+    '#Shorts', '#Viral', '#TikTok', '#Instagram', '#YouTubeShorts',
+    '#Learn', '#Tips', '#Hacks', '#Tutorial', '#Guide'
+  ];
+
+  const categoryHashtags: Record<string, string[]> = {
+    'Productivity': ['#Productivity', '#TimeManagement', '#Focus', '#Efficiency', '#WorkHacks'],
+    'Health & Fitness': ['#Health', '#Fitness', '#Wellness', '#Workout', '#HealthyLiving'],
+    'Technology': ['#Tech', '#Technology', '#AI', '#Innovation', '#Digital'],
+    'Business': ['#Business', '#Entrepreneur', '#Success', '#Money', '#Marketing'],
+    'Lifestyle': ['#Lifestyle', '#LifeHacks', '#DailyLife', '#Motivation', '#Inspiration']
+  };
+
+  const topicWords = topic.toLowerCase()
+    .replace(/[^\w\s]/g, '')
+    .split(' ')
+    .filter(word => word.length > 2)
+    .map(word => `#${word.charAt(0).toUpperCase() + word.slice(1)}`);
+
+  const categoryTags = categoryHashtags[category] || ['#Content'];
+
+  return [...baseHashtags.slice(0, 3), ...categoryTags.slice(0, 3), ...topicWords.slice(0, 2)];
+}
+
 // todo abstract class
 export class APIRouter {
   public router: express.Router;
@@ -308,6 +334,201 @@ export class APIRouter {
           res.status(400).json({
             error: "Failed to generate video",
             message: error instanceof Error ? error.message : "Unknown error",
+          });
+        }
+      },
+    );
+
+    // Workflow endpoints
+    this.router.post(
+      "/workflow/generate-scripts",
+      async (req: ExpressRequest, res: ExpressResponse) => {
+        try {
+          const { category, topics, style = "Problem-Solution", count = 5 } = req.body;
+
+          if (!category || !topics || !Array.isArray(topics) || topics.length === 0) {
+            res.status(400).json({
+              error: "category and topics array are required",
+            });
+            return;
+          }
+
+          logger.info({ category, topics, style, count }, "Generating workflow scripts");
+
+          // Generate scripts for each topic
+          const scripts = topics.slice(0, count).map((topic: string) => {
+            const scriptData = generateScript({
+              topic,
+              style: style as "Problem-Solution" | "Myth-Truth" | "Tutorial" | "Motivation",
+              minDuration: 30000,
+            });
+
+            return {
+              topic,
+              category,
+              style,
+              scenes: scriptData.scenes,
+              searchTerms: scriptData.scenes.flatMap(scene => scene.searchTerms),
+            };
+          });
+
+          res.status(200).json(scripts);
+        } catch (error: unknown) {
+          logger.error(error, "Error generating workflow scripts");
+          res.status(500).json({
+            error: "Failed to generate scripts",
+            message: error instanceof Error ? error.message : "Unknown error",
+          });
+        }
+      },
+    );
+
+    this.router.post(
+      "/workflow/generate-video",
+      async (req: ExpressRequest, res: ExpressResponse) => {
+        try {
+          const { script, voice = VoiceEnumValues.af_nova, music = "hopeful", category } = req.body;
+
+          if (!script || !script.scenes) {
+            res.status(400).json({
+              error: "script with scenes is required",
+            });
+            return;
+          }
+
+          // Validate voice and map friendly names to valid voices
+          const voiceMap: Record<string, VoiceEnum> = {
+            'male-professional': VoiceEnumValues.bm_george,
+            'female-energetic': VoiceEnumValues.bf_emma,
+            'male-tech': VoiceEnumValues.am_liam,
+            'female-friendly': VoiceEnumValues.bf_lily,
+            'default': VoiceEnumValues.af_nova,
+          };
+
+          const resolvedVoice =
+            (voice && (VoiceEnumValues as any)[voice]) ||
+            (voiceMap as any)[voice] ||
+            VoiceEnumValues.af_nova;
+
+          // Create config for video
+          const config: {
+            orientation: OrientationEnum;
+            music: MusicMoodEnum;
+            musicVolume: MusicVolumeEnum;
+            captionPosition: CaptionPositionEnum;
+            voice: VoiceEnum;
+            paddingBack: number;
+          } = {
+            orientation: OrientationEnumValues.portrait,
+            music: (music as MusicMoodEnum),
+            musicVolume: MusicVolumeEnumValues.high,
+            captionPosition: CaptionPositionEnumValues.bottom,
+            voice: resolvedVoice,
+            paddingBack: 2000,
+          };
+
+          // Convert scenes to proper format
+          const scenes = script.scenes.map((scene: any) => ({
+            text: scene.text,
+            searchTerms: scene.searchTerms,
+          }));
+
+          logger.info({ topic: script.topic, category, voice, music }, "Generating workflow video");
+
+          // Add to queue and return video ID
+          const videoId = this.shortCreator.addToQueue(scenes, config);
+
+          // Generate captions and hashtags
+          const captions = scenes.map((scene: any, index: number) => ({
+            timestamp: index * 5, // Approximate timestamp
+            text: scene.text,
+            duration: 5,
+          }));
+
+          const hashtags = generateHashtags(script.topic, category);
+
+          res.status(201).json({
+            id: `workflow-${videoId}`,
+            videoId,
+            topic: script.topic,
+            category,
+            voice,
+            music,
+            duration: scenes.length * 5, // Approximate duration
+            captions,
+            hashtags,
+          });
+        } catch (error: unknown) {
+          logger.error(error, "Error generating workflow video");
+          res.status(500).json({
+            error: "Failed to generate video",
+            message: error instanceof Error ? error.message : "Unknown error",
+          });
+        }
+      },
+    );
+
+    // Get captions for a video
+    this.router.get(
+      "/video/:videoId/captions",
+      (req: ExpressRequest, res: ExpressResponse) => {
+        try {
+          const { videoId } = req.params;
+          if (!videoId) {
+            res.status(400).json({
+              error: "videoId is required",
+            });
+            return;
+          }
+
+          // For now, return mock captions - in a real implementation,
+          // you'd extract these from the video generation process
+          const mockCaptions = [
+            { timestamp: 0, text: "Welcome to this amazing video!", duration: 3 },
+            { timestamp: 3, text: "Let's dive into the topic", duration: 2 },
+            { timestamp: 5, text: "Here's what you need to know", duration: 3 },
+          ];
+
+          res.status(200).json({
+            videoId,
+            captions: mockCaptions,
+            format: "SRT",
+          });
+        } catch (error: unknown) {
+          logger.error(error, "Error getting captions");
+          res.status(500).json({
+            error: "Failed to get captions",
+          });
+        }
+      },
+    );
+
+    // Get hashtags for a topic
+    this.router.get(
+      "/hashtags",
+      (req: ExpressRequest, res: ExpressResponse) => {
+        try {
+          const { topic, category } = req.query;
+
+          if (!topic || typeof topic !== 'string') {
+            res.status(400).json({
+              error: "topic parameter is required",
+            });
+            return;
+          }
+
+          const hashtags = generateHashtags(topic, category as string || 'General');
+
+          res.status(200).json({
+            topic,
+            category: category || 'General',
+            hashtags,
+            count: hashtags.length,
+          });
+        } catch (error: unknown) {
+          logger.error(error, "Error generating hashtags");
+          res.status(500).json({
+            error: "Failed to generate hashtags",
           });
         }
       },

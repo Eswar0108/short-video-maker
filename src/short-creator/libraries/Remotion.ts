@@ -49,19 +49,54 @@ export class Remotion {
 
     const outputLocation = path.join(this.config.videosDirPath, `${id}.mp4`);
 
-    await renderMedia({
-      codec: "h264",
-      composition,
-      serveUrl: this.bundled,
-      outputLocation,
-      inputProps: data,
-      onProgress: ({ progress }) => {
-        logger.debug(`Rendering ${id} ${Math.floor(progress * 100)}% complete`);
-      },
-      // preventing memory issues with docker
-      concurrency: this.config.concurrency,
-      offthreadVideoCacheSizeInBytes: this.config.videoCacheSizeInBytes,
-    });
+    const maxRetries = 2;
+    let attempt = 0;
+    let success = false;
+    let lastError: Error | null = null;
+
+    while (!success && attempt <= maxRetries) {
+      try {
+        const effectiveConcurrency = Math.max(1, this.config.concurrency || 1);
+
+        await renderMedia({
+          codec: "h264",
+          composition,
+          serveUrl: this.bundled,
+          outputLocation,
+          inputProps: data,
+          onProgress: ({ progress }) => {
+            logger.debug(`Rendering ${id} ${Math.floor(progress * 100)}% complete`);
+          },
+          concurrency: effectiveConcurrency,
+          offthreadVideoCacheSizeInBytes: this.config.videoCacheSizeInBytes,
+        });
+
+        success = true;
+      } catch (error: unknown) {
+        attempt += 1;
+        lastError = error instanceof Error ? error : new Error("Unknown render error");
+
+        logger.error({
+          attempt,
+          videoID: id,
+          isSigterm: error instanceof Error && /SIGTERM|Compositor exited/i.test(error.message),
+          err: lastError,
+        },
+        "Remotion render failed, retrying");
+
+        if (attempt > maxRetries) {
+          logger.error({ videoID: id, err: lastError }, "Remotion render failed after retries");
+          throw lastError;
+        }
+
+        // Exponential backoff
+        const waitMs = attempt * 2500;
+        await new Promise((resolve) => setTimeout(resolve, waitMs));
+
+        // lower concurrency after failures to avoid resource exhaustion
+        this.config.concurrency = 1;
+      }
+    }
 
     logger.debug(
       {
